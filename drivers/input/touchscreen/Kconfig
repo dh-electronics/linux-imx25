@@ -363,6 +363,17 @@ config TOUCHSCREEN_IMX_ADC
 	  To compile this driver as a module, choose M here: the
 	  module will be called imx_adc_ts.
 
+config TOUCHSCREEN_TMG120_TS
+	tristate "DH Electronic tmg120 touch controller"
+	depends on I2C
+	help
+	  Say Y here to enable DH Electronic tmg120 touchscreen support.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called tmg120_ts.
+
 config TOUCHSCREEN_STMP3XXX
 	tristate "STMP3XXX LRADC-based touchscreen"
 	depends on ARCH_STMP3XXX

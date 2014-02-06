@@ -1,0 +1,11 @@
+# drivers/video/mxc/Kconfig
+
+if ARCH_MXC
+
+menu "MXC support drivers"
+
+source "drivers/mxc/adc/Kconfig"
+
+endmenu
+
+endif

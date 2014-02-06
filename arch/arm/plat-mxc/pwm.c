@@ -127,6 +127,43 @@ int pwm_config(struct pwm_device *pwm, int duty_ns, int period_ns)
 }
 EXPORT_SYMBOL(pwm_config);
 
+int pwm_get_config(struct pwm_device *pwm, int *duty_ns, int *period_ns)
+{
+	if (pwm == NULL)
+		return -EINVAL;
+
+	if (cpu_is_mx27() || cpu_is_mx3() || cpu_is_mx25() || cpu_is_mx51()) {
+		unsigned long long c;
+		unsigned long long period_cycles, duty_cycles, prescale;
+
+		c = clk_get_rate(pwm->clk);
+
+		prescale = ((readl(pwm->mmio_base + MX3_PWMCR) >> 4) & 0xfff) + 1;
+
+		duty_cycles = readl(pwm->mmio_base + MX3_PWMSAR);
+		period_cycles = readl(pwm->mmio_base + MX3_PWMPR);
+
+		duty_cycles *= prescale;
+		period_cycles *= prescale;
+
+		duty_cycles *= 1000000000;
+		period_cycles *= 1000000000;
+
+		do_div(duty_cycles, c);
+		do_div(period_cycles, c);
+
+		*duty_ns = duty_cycles;
+		*period_ns = period_cycles;
+
+
+	} else {
+		BUG();
+	}
+
+	return 0;
+}
+EXPORT_SYMBOL(pwm_get_config);
+
 int pwm_enable(struct pwm_device *pwm)
 {
 	int rc = 0;

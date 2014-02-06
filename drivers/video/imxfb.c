@@ -164,6 +164,9 @@ struct imxfb_info {
 
 	void (*lcd_power)(int);
 	void (*backlight_power)(int);
+
+	int			clk_enabled;
+	int			backlight_inverted;
 };
 
 #define IMX_NAME	"IMX"
@@ -440,26 +443,42 @@ static int imxfb_bl_get_brightness(struct backlight_device *bl)
 {
 	struct imxfb_info *fbi = bl_get_data(bl);
 
-	return readl(fbi->regs + LCDC_PWMR) & 0xFF;
+	if (fbi->backlight_inverted)
+		return 255 - (readl(fbi->regs + LCDC_PWMR) & 0xFF);
+	else
+		return (readl(fbi->regs + LCDC_PWMR) & 0xFF);
 }
 
 static int imxfb_bl_update_status(struct backlight_device *bl)
 {
 	struct imxfb_info *fbi = bl_get_data(bl);
-	int brightness = bl->props.brightness;
+	int brightness;
+	int minimal_bright;
+
+	if (fbi->backlight_inverted) {
+		brightness = 255 - bl->props.brightness;
+		minimal_bright = 255;
+	} else {
+		brightness = bl->props.brightness;
+		minimal_bright = 0;
+	}
 
 	if (bl->props.power != FB_BLANK_UNBLANK)
-		brightness = 0;
+		brightness = minimal_bright;
 	if (bl->props.fb_blank != FB_BLANK_UNBLANK)
-		brightness = 0;
+		brightness = minimal_bright;
 
 	fbi->pwmr = (fbi->pwmr & ~0xFF) | brightness;
 
-	if (bl->props.fb_blank != FB_BLANK_UNBLANK)
+	if (bl->props.fb_blank != FB_BLANK_UNBLANK) {
+		fbi->clk_enabled = 1;
 		clk_enable(fbi->clk);
+	}
 	writel(fbi->pwmr, fbi->regs + LCDC_PWMR);
-	if (bl->props.fb_blank != FB_BLANK_UNBLANK)
+	if (bl->props.fb_blank != FB_BLANK_UNBLANK) {
+		fbi->clk_enabled = 0;
 		clk_disable(fbi->clk);
+	}
 
 	return 0;
 }
@@ -478,9 +497,10 @@ static void imxfb_init_backlight(struct imxfb_info *fbi)
 		return;
 
 	memset(&props, 0, sizeof(struct backlight_properties));
+
 	props.max_brightness = 0xff;
 	props.type = BACKLIGHT_RAW;
-	writel(fbi->pwmr, fbi->regs + LCDC_PWMR);
+	//writel(fbi->pwmr, fbi->regs + LCDC_PWMR);
 
 	bl = backlight_device_register("imxfb-bl", &fbi->pdev->dev, fbi,
 				       &imxfb_lcdc_bl_ops, &props);
@@ -523,6 +543,7 @@ static void imxfb_enable_controller(struct imxfb_info *fbi)
 	writel(RMCR_LCDC_EN_MX1, fbi->regs + LCDC_RMCR);
 
 	clk_enable(fbi->clk);
+	fbi->clk_enabled = 1;
 
 	if (fbi->backlight_power)
 		fbi->backlight_power(1);
@@ -539,9 +560,13 @@ static void imxfb_disable_controller(struct imxfb_info *fbi)
 	if (fbi->lcd_power)
 		fbi->lcd_power(0);
 
-	clk_disable(fbi->clk);
+	if (fbi->clk_enabled) {
+		clk_disable(fbi->clk);
+		fbi->clk_enabled = 0;
+	}
 
 	writel(0, fbi->regs + LCDC_RMCR);
+
 }
 
 static int imxfb_blank(int blank, struct fb_info *info)
@@ -636,9 +661,10 @@ static int imxfb_activate_var(struct fb_var_screeninfo *var, struct fb_info *inf
 	writel(SIZE_XMAX(var->xres) | SIZE_YMAX(var->yres),
 			fbi->regs + LCDC_SIZE);
 
+	pr_debug("writing pcr: %08x\n", fbi->pcr);
 	writel(fbi->pcr, fbi->regs + LCDC_PCR);
 #ifndef PWMR_BACKLIGHT_AVAILABLE
-	writel(fbi->pwmr, fbi->regs + LCDC_PWMR);
+	//writel(fbi->pwmr, fbi->regs + LCDC_PWMR);
 #endif
 	writel(fbi->lscr1, fbi->regs + LCDC_LSCR1);
 	writel(fbi->dmacr, fbi->regs + LCDC_DMACR);
@@ -728,6 +754,53 @@ static int __init imxfb_init_fbinfo(struct platform_device *pdev)
 	return 0;
 }
 
+static void dump_regs(struct imxfb_info *fbi)
+{
+	int i;
+	for (i=0; i<0x44; i+=4) {
+		u32 reg = readl( fbi->regs + i );
+		printk( KERN_ERR "reg %d\t: %x\n", i, reg );
+	}
+}
+
+static void __init imxfb_get_videomode_from_hw(struct imxfb_info *fbi, struct imx_fb_videomode *mode)
+{
+	unsigned long long pixclk_mult;
+	//unsigned long long base_clk_rate = clk_get_rate(fbi->clk);
+
+	/* This is the base clock rate from u-boot */
+	unsigned long long base_clk_rate = 399000000/6;
+	unsigned long long pixperiod_base = 1000000000UL;
+
+	mode->mode.hsync_len    = ((readl(fbi->regs + LCDC_HCR) >> 26) & 0x3f ) + 1;
+	mode->mode.right_margin = ((readl(fbi->regs + LCDC_HCR) >>  8) & 0xff ) + 1;
+	mode->mode.left_margin  = ((readl(fbi->regs + LCDC_HCR) >>  0) & 0xff ) + 3;
+
+	mode->mode.vsync_len    = (readl(fbi->regs + LCDC_VCR) >> 26) & 0x3f;
+	mode->mode.lower_margin = (readl(fbi->regs + LCDC_VCR) >>  8) & 0xff;
+	mode->mode.upper_margin = (readl(fbi->regs + LCDC_VCR) >>  0) & 0xff;
+
+	mode->mode.xres = (readl(fbi->regs + LCDC_SIZE) >> 16) & (0x3f<<4) ;
+	mode->mode.yres = (readl(fbi->regs + LCDC_SIZE) >>  0) & 0x3ff;
+
+	mode->pcr = readl(fbi->regs + LCDC_PCR);
+	pr_debug( "mode->pcr = %08x\n", mode->pcr );
+	pr_debug( "base clock rate = %ld\n", clk_get_rate(fbi->clk));
+
+	fbi->lscr1 = readl(fbi->regs + LCDC_LSCR1);
+	fbi->dmacr = readl(fbi->regs + LCDC_DMACR);
+
+	/* Calculate the pixel clock */
+	pixclk_mult = mode->pcr & 0x3f;
+	pixclk_mult += 1;
+	pixclk_mult *= 1000;
+
+	do_div(base_clk_rate, pixclk_mult);
+
+	do_div(pixperiod_base, base_clk_rate);
+	mode->mode.pixclock = pixperiod_base;
+}
+
 static int __init imxfb_probe(struct platform_device *pdev)
 {
 	struct imxfb_info *fbi;
@@ -783,6 +856,8 @@ static int __init imxfb_probe(struct platform_device *pdev)
 		goto failed_ioremap;
 	}
 
+	//dump_regs(fbi);
+
 	if (!pdata->fixed_screen_cpu) {
 		fbi->map_size = PAGE_ALIGN(info->fix.smem_len);
 		fbi->map_cpu = dma_alloc_writecombine(&pdev->dev,
@@ -816,6 +891,9 @@ static int __init imxfb_probe(struct platform_device *pdev)
 
 	fbi->mode = pdata->mode;
 	fbi->num_modes = pdata->num_modes;
+	fbi->backlight_inverted = pdata->backlight_inverted;
+
+	imxfb_get_videomode_from_hw(fbi, &pdata->mode[0]);
 
 	INIT_LIST_HEAD(&info->modelist);
 	for (i = 0; i < pdata->num_modes; i++)
@@ -826,6 +904,12 @@ static int __init imxfb_probe(struct platform_device *pdev)
 	 * descriptors are correctly initialised.
 	 */
 	imxfb_check_var(&info->var, info);
+
+	/*
+	 * imxfb_check_var recalculates the pcr register.
+	 * we want to keep the old value. so lets read it out again.
+	 */
+	//fbi->pcr   = readl(fbi->regs + LCDC_PCR);
 
 	ret = fb_alloc_cmap(&info->cmap, 1 << info->var.bits_per_pixel, 0);
 	if (ret < 0)
@@ -844,6 +928,7 @@ static int __init imxfb_probe(struct platform_device *pdev)
 	imxfb_init_backlight(fbi);
 #endif
 
+	//dump_regs(fbi);
 	return 0;
 
 failed_register:

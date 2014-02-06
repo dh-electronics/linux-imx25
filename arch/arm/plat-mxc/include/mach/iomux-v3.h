@@ -122,6 +122,13 @@ typedef u64 iomux_v3_cfg_t;
 #define GPIO_PORTE	(4 << GPIO_PORT_SHIFT)
 #define GPIO_PORTF	(5 << GPIO_PORT_SHIFT)
 
+#define IRQ_GPIOA(x)  (MXC_GPIO_IRQ_START + x)
+#define IRQ_GPIOB(x)  (IRQ_GPIOA(32) + x)
+#define IRQ_GPIOC(x)  (IRQ_GPIOB(32) + x)
+#define IRQ_GPIOD(x)  (IRQ_GPIOC(32) + x)
+#define IRQ_GPIOE(x)  (IRQ_GPIOD(32) + x)
+#define IRQ_GPIOF(x)  (IRQ_GPIOE(32) + x)
+
 /*
  * setups a single pad in the iomuxer
  */

@@ -78,6 +78,8 @@ struct imx_fb_platform_data {
 
 	void (*lcd_power)(int);
 	void (*backlight_power)(int);
+
+	int backlight_inverted;
 };
 
 void set_imx_fb_info(struct imx_fb_platform_data *);

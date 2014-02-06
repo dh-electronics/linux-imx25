@@ -147,10 +147,13 @@ static u32 esdhc_readl_le(struct sdhci_host *host, int reg)
 
 	if (unlikely((reg == SDHCI_PRESENT_STATE)
 			&& gpio_is_valid(boarddata->cd_gpio))) {
-		if (gpio_get_value(boarddata->cd_gpio))
+
+/* LZ: no carddetect polarity defined */
+		//if (gpio_get_value(boarddata->cd_gpio))
+		
 			/* no card, if a valid gpio says so... */
-			val &= ~SDHCI_CARD_PRESENT;
-		else
+		//	val &= ~SDHCI_CARD_PRESENT;
+		//else
 			/* ... in all other cases assume card is present */
 			val |= SDHCI_CARD_PRESENT;
 	}
@@ -544,6 +547,8 @@ static int __devinit sdhci_esdhc_imx_probe(struct platform_device *pdev)
 	case ESDHC_CD_NONE:
 		break;
 	}
+
+	sdhci_writel(host, 0x04800480, SDHCI_CAPABILITIES_1);
 
 	err = sdhci_add_host(host);
 	if (err)

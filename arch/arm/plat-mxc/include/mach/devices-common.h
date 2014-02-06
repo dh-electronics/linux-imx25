@@ -331,3 +331,13 @@ struct imx_ahci_imx_data {
 struct platform_device *__init imx_add_ahci_imx(
 		const struct imx_ahci_imx_data *data,
 		const struct ahci_platform_data *pdata);
+
+struct imx_mxc_tsc_data {
+	const char *devid;
+	int id;
+	resource_size_t iobase;
+	resource_size_t iosize;
+	int irq;
+};
+struct platform_device *__init imx_add_tsc_imx(
+	const struct imx_mxc_tsc_data *data );

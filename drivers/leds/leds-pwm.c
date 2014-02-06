@@ -45,6 +45,28 @@ static void led_pwm_set(struct led_classdev *led_cdev,
 		pwm_config(led_dat->pwm, brightness * period / max, period);
 		pwm_enable(led_dat->pwm);
 	}
+	//printk( "set brightness=%d (%d,%d)\n", (unsigned int)brightness, (unsigned int) brightness * period / max, (unsigned int) period);
+}
+
+static enum led_brightness led_pwm_get(struct led_classdev *led_cdev)
+{
+	struct led_pwm_data *led_dat =
+		container_of(led_cdev, struct led_pwm_data, cdev);
+	unsigned int max = led_dat->cdev.max_brightness;
+
+	unsigned int duty_ns;
+	unsigned int period_ns;
+	enum led_brightness brightness;
+
+	pwm_get_config(led_dat->pwm, &duty_ns, &period_ns);
+	//printk( "get brightness=%d (%d,%d)\n", (unsigned int)brightness, duty_ns, period_ns);
+
+	brightness = duty_ns*max / period_ns;
+
+	//printk( "get brightness=%d (%d,%d)\n", (unsigned int)brightness, duty_ns, period_ns);
+
+	return brightness;
+
 }
 
 static int led_pwm_probe(struct platform_device *pdev)
@@ -80,6 +102,7 @@ static int led_pwm_probe(struct platform_device *pdev)
 		led_dat->active_low = cur_led->active_low;
 		led_dat->period = cur_led->pwm_period_ns;
 		led_dat->cdev.brightness_set = led_pwm_set;
+		led_dat->cdev.brightness_get = led_pwm_get;
 		led_dat->cdev.brightness = LED_OFF;
 		led_dat->cdev.max_brightness = cur_led->max_brightness;
 		led_dat->cdev.flags |= LED_CORE_SUSPENDRESUME;

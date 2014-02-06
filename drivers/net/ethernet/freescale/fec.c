@@ -284,7 +284,8 @@ fec_enet_start_xmit(struct sk_buff *skb, struct net_device *ndev)
 
 	if (!fep->link) {
 		/* Link is down or autonegotiation is in progress. */
-		return NETDEV_TX_BUSY;
+		dev_kfree_skb_any(skb);
+		return NETDEV_TX_OK;
 	}
 
 	spin_lock_irqsave(&fep->hw_lock, flags);
@@ -299,7 +300,8 @@ fec_enet_start_xmit(struct sk_buff *skb, struct net_device *ndev)
 		 */
 		printk("%s: tx queue full!.\n", ndev->name);
 		spin_unlock_irqrestore(&fep->hw_lock, flags);
-		return NETDEV_TX_BUSY;
+		dev_kfree_skb_any(skb);
+		return NETDEV_TX_OK;
 	}
 
 	/* Clear all of the status flags */

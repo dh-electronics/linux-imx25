@@ -38,9 +38,9 @@ extern const struct imx_imx_fb_data imx25_imx_fb_data;
 extern const struct imx_imx_i2c_data imx25_imx_i2c_data[];
 #define imx25_add_imx_i2c(id, pdata)	\
 	imx_add_imx_i2c(&imx25_imx_i2c_data[id], pdata)
-#define imx25_add_imx_i2c0(pdata)	imx25_add_imx_i2c(0, pdata)
 #define imx25_add_imx_i2c1(pdata)	imx25_add_imx_i2c(1, pdata)
 #define imx25_add_imx_i2c2(pdata)	imx25_add_imx_i2c(2, pdata)
+#define imx25_add_imx_i2c3(pdata)	imx25_add_imx_i2c(3, pdata)
 
 extern const struct imx_imx_keypad_data imx25_imx_keypad_data;
 #define imx25_add_imx_keypad(pdata)	\
@@ -85,6 +85,17 @@ extern const struct imx_spi_imx_data imx25_cspi_data[];
 #define imx25_add_spi_imx1(pdata)	imx25_add_spi_imx(1, pdata)
 #define imx25_add_spi_imx2(pdata)	imx25_add_spi_imx(2, pdata)
 
-extern struct imx_mxc_pwm_data imx25_mxc_pwm_data[];
-#define imx25_add_mxc_pwm(id)	\
+extern const struct imx_mxc_tsc_data imx25_mxc_tsc_data __initconst;
+#define imx25_add_mxc_tsc()	\
+	imx_add_tsc_imx(&imx25_mxc_tsc_data)
+
+extern const struct imx_mxc_pwm_data imx25_mxc_pwm_data[] __initconst;
+#define imx25_add_pwm_mxc(id)	\
 	imx_add_mxc_pwm(&imx25_mxc_pwm_data[id])
+
+#define imx25_add_pwm_mxc0()	imx25_add_pwm_mxc(0)
+#define imx25_add_pwm_mxc1()	imx25_add_pwm_mxc(1)
+#define imx25_add_pwm_mxc2()	imx25_add_pwm_mxc(2)
+#define imx25_add_pwm_mxc3()	imx25_add_pwm_mxc(3)
+
+

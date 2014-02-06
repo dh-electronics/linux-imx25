@@ -34,9 +34,9 @@ const struct imx_imx_i2c_data imx21_imx_i2c_data __initconst =
 const struct imx_imx_i2c_data imx25_imx_i2c_data[] __initconst = {
 #define imx25_imx_i2c_data_entry(_id, _hwid)				\
 	imx_imx_i2c_data_entry(MX25, _id, _hwid, SZ_16K)
-	imx25_imx_i2c_data_entry(0, 1),
-	imx25_imx_i2c_data_entry(1, 2),
-	imx25_imx_i2c_data_entry(2, 3),
+	imx25_imx_i2c_data_entry(1, 1),
+	imx25_imx_i2c_data_entry(2, 2),
+	imx25_imx_i2c_data_entry(3, 3),
 };
 #endif /* ifdef CONFIG_SOC_IMX25 */
 

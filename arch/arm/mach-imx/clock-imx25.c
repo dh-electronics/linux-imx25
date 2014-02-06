@@ -130,7 +130,7 @@ static unsigned long get_rate_nfc(struct clk *clk)
 
 static unsigned long get_rate_gpt(struct clk *clk)
 {
-	return get_rate_per(5);
+	return get_rate_ipg(NULL);
 }
 
 static unsigned long get_rate_lcdc(struct clk *clk)
@@ -285,15 +285,15 @@ static struct clk_lookup lookups[] = {
 	_REGISTER_CLOCK("fsl-usb2-udc", "usb", usbotg_clk)
 	_REGISTER_CLOCK("mxc_nand.0", NULL, nfc_clk)
 	/* i.mx25 has the i.mx35 type cspi */
-	_REGISTER_CLOCK("imx35-cspi.0", NULL, cspi1_clk)
-	_REGISTER_CLOCK("imx35-cspi.1", NULL, cspi2_clk)
+	_REGISTER_CLOCK("imx35-cspi.1", NULL, cspi1_clk)
+	_REGISTER_CLOCK("imx35-cspi.0", NULL, cspi2_clk)
 	_REGISTER_CLOCK("imx35-cspi.2", NULL, cspi3_clk)
 	_REGISTER_CLOCK("mxc_pwm.0", NULL, pwm1_clk)
 	_REGISTER_CLOCK("mxc_pwm.1", NULL, pwm2_clk)
 	_REGISTER_CLOCK("mxc_pwm.2", NULL, pwm3_clk)
 	_REGISTER_CLOCK("mxc_pwm.3", NULL, pwm4_clk)
 	_REGISTER_CLOCK("imx-keypad", NULL, kpp_clk)
-	_REGISTER_CLOCK("mx25-adc", NULL, tsc_clk)
+	_REGISTER_CLOCK("imx_adc.0", NULL, tsc_clk)
 	_REGISTER_CLOCK("imx-i2c.0", NULL, i2c_clk)
 	_REGISTER_CLOCK("imx-i2c.1", NULL, i2c_clk)
 	_REGISTER_CLOCK("imx-i2c.2", NULL, i2c_clk)
@@ -327,6 +327,7 @@ int __init mx25_clocks_init(void)
 	__raw_writel((1 << 5), CRM_BASE + CCM_CGCR2);
 #if defined(CONFIG_DEBUG_LL) && !defined(CONFIG_DEBUG_ICEDCC)
 	clk_enable(&uart1_clk);
+	clk_enable(&uart2_clk);
 #endif
 
 	/* Clock source for lcdc and csi is upll */

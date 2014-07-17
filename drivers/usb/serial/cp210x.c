@@ -890,7 +890,7 @@ static int cp210x_tiocmset_port(struct usb_serial_port *port,
 	dbg("%s - control = 0x%.4x", __func__, control);
 
 	return cp210x_set_config(port, REQTYPE_HOST_TO_INTERFACE,
-				CP210X_SET_MHS, 0, &control, 2);
+				CP210X_SET_MHS, control, NULL, 0);
 }
 
 static void cp210x_dtr_rts(struct usb_serial_port *p, int on)

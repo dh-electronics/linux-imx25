@@ -80,6 +80,7 @@ static __inline__ void __arch_decomp_setup(unsigned long arch_id)
 		break;
 	case MACH_TYPE_MX25_DHEVM:
 	case MACH_TYPE_MX25_DHEBOX:
+	case MACH_TYPE_MX25_DHMEDEACC:
 		uart_base = MX25_UART2_BASE_ADDR;
 		break;
 	case MACH_TYPE_IMX27LITE:

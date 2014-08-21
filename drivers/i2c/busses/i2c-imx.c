@@ -126,6 +126,7 @@ struct imx_i2c_struct {
 	unsigned int 		disable_delay;
 	int			stopped;
 	unsigned int		ifdr; /* IMX_I2C_IFDR */
+	int                     (*handle_arbloss)(void);
 };
 
 static const struct of_device_id i2c_imx_dt_ids[] = {
@@ -149,6 +150,19 @@ static int i2c_imx_bus_busy(struct imx_i2c_struct *i2c_imx, int for_busy)
 			break;
 		if (!for_busy && !(temp & I2SR_IBB))
 			break;
+		if (temp & I2SR_IAL) {
+		        dev_dbg(&i2c_imx->adapter.dev,
+				"<%s> I2C bus arbitration loss\n", __func__);
+			
+			/* resolve arbitration loss (if function defined in boardfile) */	
+			if ( i2c_imx->handle_arbloss ) {
+			        i2c_imx->handle_arbloss();
+			}
+			
+			/* reset arbitration loss bit */	
+			writeb(temp & (!I2SR_IAL), i2c_imx->base + IMX_I2C_I2SR);
+		        return -EPROTO;
+		}
 		if (signal_pending(current)) {
 			dev_dbg(&i2c_imx->adapter.dev,
 				"<%s> I2C Interrupted\n", __func__);
@@ -524,6 +538,9 @@ static int __init i2c_imx_probe(struct platform_device *pdev)
 	i2c_imx->irq			= irq;
 	i2c_imx->base			= base;
 	i2c_imx->res			= res;
+	
+	/* set arbitration loss handler */
+	i2c_imx->handle_arbloss = pdata->i2c_arbloss;
 
 	/* Get I2C clock */
 	i2c_imx->clk = clk_get(&pdev->dev, "i2c_clk");

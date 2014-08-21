@@ -1437,7 +1437,7 @@ dm9000_probe(struct platform_device *pdev)
 		goto out;
 	}
 
-	db->io_addr = ioremap(db->addr_res->start, iosize);
+	db->io_addr = ioremap_nocache(db->addr_res->start, iosize);
 
 	if (db->io_addr == NULL) {
 		dev_err(db->dev, "failed to ioremap address reg\n");
@@ -1455,7 +1455,7 @@ dm9000_probe(struct platform_device *pdev)
 		goto out;
 	}
 
-	db->io_data = ioremap(db->data_res->start, iosize);
+	db->io_data = ioremap_nocache(db->data_res->start, iosize);
 
 	if (db->io_data == NULL) {
 		dev_err(db->dev, "failed to ioremap data reg\n");

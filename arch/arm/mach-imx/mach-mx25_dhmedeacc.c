@@ -282,8 +282,132 @@ static const struct matrix_keymap_data mx25dh_keymap_data __initconst = {
 	.keymap_size	= ARRAY_SIZE(mx25dh_keymap),
 };
 
-static const struct imxi2c_platform_data dh_evm_i2c0_data __initconst = {
+/*
+ * handle arbitration loss on i2c1
+ */
+
+static iomux_v3_cfg_t mx25_pads_i2c1_func[] = {
+	MX25_PAD_I2C1_CLK__I2C1_CLK,
+	MX25_PAD_I2C1_DAT__I2C1_DAT,
+};
+
+static iomux_v3_cfg_t mx25_pads_i2c1_gpios[] = {
+	MX25_PAD_I2C1_CLK__GPIO_1_12, /* GPIO_PORTA | 12 */
+	MX25_PAD_I2C1_DAT__GPIO_1_13, /* GPIO_PORTA | 13 */
+};
+
+static int i2c1_arbloss(void)
+{
+        int index;
+        printk("handle arbitration loss on i2c1!\n");
+        
+        /* configure i2c pads to gpios */
+        mxc_iomux_v3_setup_multiple_pads(mx25_pads_i2c1_gpios,
+			ARRAY_SIZE(mx25_pads_i2c1_gpios));
+        
+        /* aquire and setup gpios */
+        gpio_request(GPIO_PORTA | 12, "i2c1_imx" );
+	gpio_direction_output(GPIO_PORTA | 12, 1);
+		
+	gpio_request(GPIO_PORTA | 13, "i2c1_imx" );
+	gpio_direction_input(GPIO_PORTA | 13 );
+	
+        /* toggle scl until sda line goes to high */
+        for (index = 0; index < 8; index++) {
+                if (gpio_get_value(GPIO_PORTA | 13)) {
+                        printk("i2c1 sda is free!\n");
+                        break;
+                }
+                
+                /* toggle scl pin */
+                udelay(10);
+                gpio_set_value(GPIO_PORTA | 12, 0);
+                udelay(10);
+                gpio_set_value(GPIO_PORTA | 12, 1);
+        }
+                
+        if (!gpio_get_value(GPIO_PORTA | 13)) {
+              printk("failed to free line i2c1 sda !!!\n");
+        }        
+        
+        /* release gpios */
+        gpio_free(GPIO_PORTA | 12);
+        gpio_free(GPIO_PORTA | 13);
+        
+        /* reset i2c pads to i2c mode */
+        mxc_iomux_v3_setup_multiple_pads(mx25_pads_i2c1_func,
+			ARRAY_SIZE(mx25_pads_i2c1_func));
+          
+        return 0;      
+}
+
+static const struct imxi2c_platform_data dh_evm_i2c1_data __initconst = {
 	.bitrate = 100000,
+        .i2c_arbloss = i2c1_arbloss,
+};
+
+/*
+ * handle arbitration loss on i2c2
+ */
+ 
+static iomux_v3_cfg_t mx25_pads_i2c2_func[] = {
+	MX25_PAD_GPIO_C__I2C2_CLK,
+	MX25_PAD_GPIO_D__I2C2_DAT,
+};
+
+static iomux_v3_cfg_t mx25_pads_i2c2_gpios[] = {
+	MX25_PAD_GPIO_C__GPIO_C, /* GPIO_PORTA | 2 */
+	MX25_PAD_GPIO_D__GPIO_D, /* GPIO_PORTA | 3 */
+};
+
+static int i2c2_arbloss(void)
+{
+        int index;
+        printk("handle arbitration loss on i2c2!\n");
+                
+        /* configure i2c pads to gpios */
+        mxc_iomux_v3_setup_multiple_pads(mx25_pads_i2c2_gpios,
+			ARRAY_SIZE(mx25_pads_i2c2_gpios));
+        
+        /* aquire and setup gpios */
+        gpio_request(GPIO_PORTA | 2, "i2c2_imx" );
+	gpio_direction_output(GPIO_PORTA | 2, 1);
+		
+	gpio_request(GPIO_PORTA | 3, "i2c2_imx" );
+	gpio_direction_input(GPIO_PORTA | 3 );
+        
+        /* toggle scl until sda line goes to high */
+        for (index = 0; index < 8; index++) {
+                if (gpio_get_value(GPIO_PORTA | 3)) {
+                        printk("i2c2 sda is free!\n");
+                        break;
+                }
+                
+                /* toggle scl pin */
+                udelay(10);
+                gpio_set_value(GPIO_PORTA | 2, 0);
+                udelay(10);
+                gpio_set_value(GPIO_PORTA | 2, 1);
+        }
+        
+        if (!gpio_get_value(GPIO_PORTA | 3)) {
+              printk("failed to free line i2c2 sda !!!\n");
+        }        
+        
+        /* release gpios */
+        gpio_free(GPIO_PORTA | 2);
+        gpio_free(GPIO_PORTA | 3);
+        
+        /* reset i2c pads to i2c mode */
+        mxc_iomux_v3_setup_multiple_pads(mx25_pads_i2c2_func,
+			ARRAY_SIZE(mx25_pads_i2c2_func));
+        
+        return 0;  
+}
+
+static const struct imxi2c_platform_data dh_evm_i2c2_data __initconst = {
+	.bitrate = 100000,
+        .i2c_arbloss = i2c2_arbloss,
 };
 
 static struct i2c_board_info dh_evm_i2c0_devices[] = {
@@ -430,8 +554,8 @@ static void __init mx25dh_init(void)
 				ARRAY_SIZE(dh_evm_i2c0_devices));
 	i2c_register_board_info(2, dh_evm_i2c1_devices,
 				ARRAY_SIZE(dh_evm_i2c1_devices));
-	imx25_add_imx_i2c1(&dh_evm_i2c0_data);
-	imx25_add_imx_i2c2(&dh_evm_i2c0_data);
+	imx25_add_imx_i2c1(&dh_evm_i2c1_data);
+	imx25_add_imx_i2c2(&dh_evm_i2c2_data);
 
 	imx25_add_mxc_tsc();
 

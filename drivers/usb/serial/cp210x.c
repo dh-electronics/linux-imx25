@@ -239,6 +239,13 @@ static struct usb_serial_driver cp210x_device = {
 /* IOCTLs */
 #define IOCTL_GPIOGET		0x8000
 #define IOCTL_GPIOSET		0x8001
+// Reserced by DH		0x8002
+#define IOCTL_EVENTMASKGET	0x8003
+#define IOCTL_EVENTMASKSET	0x8004
+#define IOCTL_EVENTSTATEGET	0x8005
+#define IOCTL_COMMSTATUSGET	0x8006
+#define IOCTL_PURGE		0x8007
+
 
 /* Config request types */
 #define REQTYPE_HOST_TO_INTERFACE	0x41
@@ -503,19 +510,22 @@ static int cp210x_ioctl(struct tty_struct *tty,
 {
 	struct usb_serial_port *port = tty->driver_data;
 	struct cp210x_port_private *port_priv = usb_get_serial_port_data(port);
+	int result = 0;
 
 	switch (cmd) {
 
 	case IOCTL_GPIOGET:
 		if ((port_priv->bPartNumber == CP2103_PARTNUM) ||
 			(port_priv->bPartNumber == CP2104_PARTNUM)) {
-			cp210x_get_config(port, REQTYPE_DEVICE_TO_HOST,
+			result = cp210x_get_config(port, REQTYPE_DEVICE_TO_HOST,
 					CP210X_VENDOR_SPECIFIC,
 					CP210X_READ_LATCH,
 					(unsigned int*)arg, 1);
+			dbg("%s (CP210X_READ_LATCH) - read_latch_value = %02X"
+				, __func__, *(unsigned int*)arg);
 		}
 		else if (port_priv->bPartNumber == CP2105_PARTNUM) {
-			cp210x_get_config(port, REQTYPE_INTERFACE_TO_HOST,
+			result = cp210x_get_config(port, REQTYPE_INTERFACE_TO_HOST,
 					CP210X_VENDOR_SPECIFIC,
 					CP210X_READ_LATCH,
 					(unsigned int*)arg, 1);
@@ -531,16 +541,18 @@ static int cp210x_ioctl(struct tty_struct *tty,
 			/*cp210x_set_config(port, REQTYPE_HOST_TO_DEVICE,
 					CP210x_VENDOR_SPECIFIC,
 					CP210x_GPIO_WRITE_LATCH, &val, 2);*/
-			usb_control_msg(port->serial->dev,
+			result = usb_control_msg(port->serial->dev,
 					usb_sndctrlpipe(port->serial->dev, 0),
 					CP210X_VENDOR_SPECIFIC,
 					REQTYPE_HOST_TO_DEVICE,
 					CP210X_WRITE_LATCH,
 					*(unsigned long*)arg,
 					NULL, 0, 300);
+			dbg("%s (CP210X_WRITE_LATCH) - write_latch_value = %04X"
+				, __func__, *(unsigned int*)arg);
 		}
 		else if (port_priv->bPartNumber == CP2105_PARTNUM) {
-			cp210x_set_config(port, REQTYPE_HOST_TO_INTERFACE,
+			result = cp210x_set_config(port, REQTYPE_HOST_TO_INTERFACE,
 					CP210X_VENDOR_SPECIFIC,
 					CP210X_WRITE_LATCH,
 					(unsigned int*)arg, 2);
@@ -550,11 +562,54 @@ static int cp210x_ioctl(struct tty_struct *tty,
 		}
 		break;
 
+	case IOCTL_EVENTMASKGET:
+		result = cp210x_get_config(port, REQTYPE_INTERFACE_TO_HOST,
+				CP210X_GET_EVENTMASK,
+				0,
+				(unsigned int*)arg, 2);
+		dbg("%s (CP210X_GET_EVENTMASK) - get_wait_mask = %04X"
+			, __func__, *(unsigned int*)arg);
+		break;
+
+	case IOCTL_EVENTMASKSET:	
+		result = cp210x_set_config(port, REQTYPE_HOST_TO_INTERFACE,
+			CP210X_SET_EVENTMASK, *(unsigned int*)arg, NULL, 0);
+		dbg("%s (CP210X_SET_EVENTMASK) - set_wait_mask = %04X"
+			, __func__, *(unsigned int*)arg);
+		break;
+
+	case IOCTL_EVENTSTATEGET:
+		result = cp210x_get_config(port, REQTYPE_INTERFACE_TO_HOST,
+				CP210X_GET_EVENTSTATE,
+				0,
+				(unsigned int*)arg, 2);
+		dbg("%s (CP210X_GET_EVENTSTATE) - event_state_get = %04X"
+			, __func__, *(unsigned int*)arg);
+		break;
+
+	case IOCTL_COMMSTATUSGET:
+		result = cp210x_get_config(port, REQTYPE_INTERFACE_TO_HOST,
+				CP210X_GET_COMM_STATUS,
+				0,
+				(unsigned int*)arg, 0x13);
+		dbg("%s (P210X_GET_COMM_STATUS)", __func__);
+		break;
+
+	case IOCTL_PURGE:
+		result = cp210x_set_config(port, REQTYPE_HOST_TO_INTERFACE,
+				CP210X_PURGE,
+				*(unsigned int*)arg,
+				NULL, 0);
+		dbg("%s (CP210X_PURGE) - purge_mask = %01X"
+			, __func__, *(unsigned int*)arg);
+		break;
+
 	default:
+		return -ENOIOCTLCMD;
 		break;
 	}
 
-	return -ENOIOCTLCMD;
+	return result;
 }
 
 /*

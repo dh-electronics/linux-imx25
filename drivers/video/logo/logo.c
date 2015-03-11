@@ -82,9 +82,13 @@ const struct linux_logo * __init_refok fb_find_logo(int depth)
 		/* Generic Linux logo */
 		logo = &logo_linux_clut224;
 #endif
-#ifdef CONFIG_LOGO_DH_CLUT224
-		/* DH Electronics GmbH logo */
-		logo = &logo_dh_clut224;
+#ifdef CONFIG_LOGO_DH_480X272_CLUT224
+		/* DH Electronics GmbH logo 480x272 */
+		logo = &logo_dh_480x272_clut224;
+#endif
+#ifdef CONFIG_LOGO_DH_800X480_CLUT224
+		/* DH Electronics GmbH logo 800x480 */
+		logo = &logo_dh_800x480_clut224;
 #endif
 #ifdef CONFIG_LOGO_BLACKFIN_CLUT224
 		/* Blackfin Linux logo */

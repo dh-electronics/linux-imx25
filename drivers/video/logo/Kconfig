@@ -27,8 +27,12 @@ config LOGO_LINUX_CLUT224
 	bool "Standard 224-color Linux logo"
 	default y
 	
-config LOGO_DH_CLUT224
-	bool "224-color DH electronics logo"
+config LOGO_DH_480X272_CLUT224
+	bool "DH electronics logo (480x272) 224-color"
+	default n
+
+config LOGO_DH_800X480_CLUT224
+	bool "DH electronics logo (800x480) 224-color"
 	default n
 
 config LOGO_BLACKFIN_VGA16

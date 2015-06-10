@@ -163,12 +163,15 @@ static iomux_v3_cfg_t mx25dh_pads[] = {
 	// Not connected		/* GPIO V | CAM_D1 */
 	// Not connected		/* GPIO W | CAM_D0 */
 
-
+	/* UART STD */
 	MX25_PAD_ECB__UART5_TXD_MUX,
 	MX25_PAD_LBA__UART5_RXD_MUX,
 
+	/* UART BT */
 	MX25_PAD_KPP_ROW0__UART3_RXD_MUX,
 	MX25_PAD_KPP_ROW1__UART3_TXD_MUX,
+	//MX25_PAD_LD0__GPIO_2_15,	/* TODO in software: CTS as GPIO */
+	//MX25_PAD_A24__GPIO_2_10,	/* TODO in software: RTS as GPIO */
 
 	/* int highest pri */
 	MX25_PAD_RTCK__GPIO_3_14,

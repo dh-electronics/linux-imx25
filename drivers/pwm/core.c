@@ -333,6 +333,24 @@ int pwm_config(struct pwm_device *pwm, int duty_ns, int period_ns)
 EXPORT_SYMBOL_GPL(pwm_config);
 
 /**
+ * pwm_get_config() - get a PWM device configuration
+ * @pwm: PWM device
+ * @duty_ns: "on" time (in nanoseconds)
+ * @period_ns: duration (in nanoseconds) of one cycle
+ */
+int pwm_get_config(struct pwm_device *pwm, int *duty_ns, int *period_ns)
+{
+	if (!pwm || !pwm->chip->ops)
+		return -EINVAL;
+
+	if (!pwm->chip->ops->get_config)
+		return -ENOSYS;
+
+	return pwm->chip->ops->get_config(pwm->chip, duty_ns, period_ns);
+}
+EXPORT_SYMBOL_GPL(pwm_get_config);
+
+/**
  * pwm_set_polarity() - configure the polarity of a PWM signal
  * @pwm: PWM device
  * @polarity: new polarity of the PWM signal

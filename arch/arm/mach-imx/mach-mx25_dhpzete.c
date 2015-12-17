@@ -503,7 +503,7 @@ static struct spi_board_info __initdata mx25dh_spi0_board_info[] = {
 /*
 static struct led_pwm mx25dh_pwm_leds[] = {
 	{
-		.name		= "pwm2:out",
+		.name		= "pwm1:out",
 		.pwm_id		= 1,
 		.max_brightness	= 255,
 		.pwm_period_ns	= 1000000,

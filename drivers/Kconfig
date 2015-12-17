@@ -137,4 +137,6 @@ source "drivers/hv/Kconfig"
 
 source "drivers/devfreq/Kconfig"
 
+source "drivers/pwm/Kconfig"
+
 endmenu

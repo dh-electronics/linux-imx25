@@ -28,6 +28,7 @@ obj-$(CONFIG_MACH_EUKREA_CPUIMX25SD) += mach-eukrea_cpuimx25.o
 obj-$(CONFIG_MACH_MX25_DHEVM) += mach-mx25_dhevm.o
 obj-$(CONFIG_MACH_MX25_DHEBOX) += mach-mx25_dhebox.o
 obj-$(CONFIG_MACH_MX25_DHMEDEACC) += mach-mx25_dhmedeacc.o
+obj-$(CONFIG_MACH_MX25_DHPZETE) += mach-mx25_dhpzete.o
 obj-$(CONFIG_MACH_EUKREA_MBIMXSD25_BASEBOARD) += eukrea_mbimxsd25-baseboard.o
 
 # i.MX27 based machines

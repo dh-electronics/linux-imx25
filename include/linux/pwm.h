@@ -74,6 +74,12 @@ static inline unsigned int pwm_get_period(struct pwm_device *pwm)
 }
 
 /*
+ * pwm_get_config - get a PWM device configuration
+ */
+int pwm_get_config(struct pwm_device *pwm, int *duty_ns, int *period_ns);
+
+
+/*
  * pwm_set_polarity - configure the polarity of a PWM signal
  */
 int pwm_set_polarity(struct pwm_device *pwm, enum pwm_polarity polarity);
@@ -97,6 +103,8 @@ struct pwm_ops {
 	int			(*config)(struct pwm_chip *chip,
 					  struct pwm_device *pwm,
 					  int duty_ns, int period_ns);
+	int			(*get_config)(struct pwm_chip *chip,
+					  int *duty_ns, int *period_ns);
 	int			(*set_polarity)(struct pwm_chip *chip,
 					  struct pwm_device *pwm,
 					  enum pwm_polarity polarity);

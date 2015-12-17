@@ -737,7 +737,7 @@ static struct sys_timer mx25dh_timer = {
 	.init   = mx25dh_timer_init,
 };
 
-MACHINE_START(MX25_DHEVM, "dh-electronics DHeva01)")
+MACHINE_START(MX25_DHEVM, "dh-electronics DHeva01")
 	/* Maintainer: Freescale Semiconductor, Inc. */
 	.atag_offset = 0x100,
 	.map_io         = mx25_map_io,

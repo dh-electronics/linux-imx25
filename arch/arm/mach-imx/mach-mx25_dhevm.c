@@ -500,10 +500,10 @@ static struct spi_board_info __initdata mx25dh_spi0_board_info[] = {
 
 static struct led_pwm mx25dh_pwm_leds[] = {
 	{
-		.name		= "pwm:out",
+		.name		= "pwm3:out",
 		.pwm_id		= 3,
 		.max_brightness	= 255,
-		.pwm_period_ns	= 7812500,
+		.pwm_period_ns	= 1000000,
 	},
 };
 
@@ -684,6 +684,9 @@ static void __init mx25dh_init(void)
 	imx25_add_mxc_tsc();
 #endif
 
+	imx25_add_pwm_mxc0();
+	imx25_add_pwm_mxc1();
+	imx25_add_pwm_mxc2();
 	imx25_add_pwm_mxc3();
 
 
